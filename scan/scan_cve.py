@@ -76,8 +76,19 @@ class ScanCVE:
                 if not vulnerable_found:
                     print("No vulnerable found in the host: {}".format(host))
 
+        def run(self):
+            if self.host_identifier:
+                hosts_platform_dict = {self.platform: [self.host_identifier]}
+            else:
+                all_hosts = self.er_api.get_nodes_with_action_online()
+                offline_hosts = self.er_api.get_nodes_with_action_offline()
+                hosts_platform_dict = self.get_platform_hosts_dict(all_hosts)
+                # Include offline hosts in the dictionary
+                hosts_platform_dict['offline'] = offline_hosts
+
+
     @staticmethod
-    def get_platform_hosts_dict(all_hosts):
+    def get_platform_hosts_dict(all_hosts, offline_hosts):
         hosts_platform_dict = {}
         for host in all_hosts:
             if 'os_info' in host and 'platform' in host['os_info']:
@@ -95,6 +106,7 @@ class ScanCVE:
                 hosts_platform_dict[platform].append(host['host_identifier'])
             else:
                 hosts_platform_dict[platform] = [host['host_identifier']]
+                hosts_platform_dict['offline'] = [host['host_identifier'] for host in offline_hosts]
         return hosts_platform_dict
 
     def get_installed_programs_csv(self, data):
